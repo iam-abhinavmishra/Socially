@@ -2,21 +2,41 @@ package com.socialapp.socialbackend.controller;
 
 import com.socialapp.socialbackend.model.Comment;
 import com.socialapp.socialbackend.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comments")
 public class CommentController {
 
-    @Autowired
-    private CommentService commentService;
+    private final CommentService commentService;
+
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
+    }
 
     @PostMapping
-    public Comment createComment(@RequestBody Comment comment) {
-        return commentService.save(comment);
+    public Comment createComment(
+            @RequestBody Map<String, Object> request
+    ) {
+
+        String content = (String) request.get("content");
+
+        Long userId = Long.valueOf(
+                request.get("userId").toString()
+        );
+
+        Long postId = Long.valueOf(
+                request.get("postId").toString()
+        );
+
+        return commentService.createComment(
+                content,
+                userId,
+                postId
+        );
     }
 
     @GetMapping

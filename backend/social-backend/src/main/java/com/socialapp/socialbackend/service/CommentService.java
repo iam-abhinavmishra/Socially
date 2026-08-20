@@ -36,31 +36,32 @@ public class CommentService {
             Long postId
     ) {
 
-        User user = userRepository
-                .findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
 
-        Post post = postRepository
-                .findById(postId)
+        Post post = postRepository.findById(postId)
                 .orElseThrow(() ->
                         new RuntimeException("Post not found")
                 );
 
         Comment comment = new Comment();
+
         comment.setContent(content);
         comment.setUser(user);
         comment.setPost(post);
 
-        Comment savedComment = commentRepository.save(comment);
+        Comment savedComment =
+                commentRepository.save(comment);
 
-        // Don't notify when commenting on your own post
-        if (!post.getUser().getId().equals(userId)) {
+        if (post.getUser() != null
+                && !post.getUser().getId().equals(userId)) {
 
             notificationService.createNotification(
                     post.getUser().getId(),
-                    user.getUsername() + " commented on your post",
+                    user.getUsername()
+                            + " commented on your post",
                     "COMMENT"
             );
         }

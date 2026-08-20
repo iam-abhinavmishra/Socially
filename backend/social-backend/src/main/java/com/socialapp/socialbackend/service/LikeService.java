@@ -8,6 +8,8 @@ import com.socialapp.socialbackend.repository.PostRepository;
 import com.socialapp.socialbackend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class LikeService {
 
@@ -30,34 +32,42 @@ public class LikeService {
 
     public Like likePost(Long userId, Long postId) {
 
-        User user = userRepository
-                .findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
 
-        Post post = postRepository
-                .findById(postId)
+        Post post = postRepository.findById(postId)
                 .orElseThrow(() ->
                         new RuntimeException("Post not found")
                 );
 
         Like like = new Like();
+
         like.setUser(user);
         like.setPost(post);
 
         Like savedLike = likeRepository.save(like);
 
-        // Don't notify users when they like their own post
-        if (!post.getUser().getId().equals(userId)) {
+        if (post.getUser() != null
+                && !post.getUser().getId().equals(userId)) {
 
             notificationService.createNotification(
                     post.getUser().getId(),
-                    user.getUsername() + " liked your post",
+                    user.getUsername()
+                            + " liked your post",
                     "LIKE"
             );
         }
 
         return savedLike;
+    }
+
+    public List<Like> getAllLikes() {
+        return likeRepository.findAll();
+    }
+
+    public void deleteLike(Long id) {
+        likeRepository.deleteById(id);
     }
 }

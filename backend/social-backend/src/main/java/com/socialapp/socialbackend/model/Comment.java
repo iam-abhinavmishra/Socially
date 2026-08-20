@@ -13,15 +13,20 @@ public class Comment {
     private String content;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
     @JoinColumn(name = "post_id")
     private Post post;
 
     public Comment() {
     }
 
-    public Comment(Long id, String content, Post post) {
+    public Comment(Long id, String content, User user, Post post) {
         this.id = id;
         this.content = content;
+        this.user = user;
         this.post = post;
     }
 
@@ -39,6 +44,14 @@ public class Comment {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Post getPost() {
