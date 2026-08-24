@@ -35,35 +35,37 @@ function HomePage() {
   }
 
   async function createPost(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    if (!content.trim() || !user?.id) return;
+  if (!content.trim() || !user?.id) return;
 
-    try {
-      const response = await api.post("/posts", {
+  try {
+    const response = await api.post(
+      `/posts?userId=${Number(user.id)}`,
+      {
         title: title.trim(),
         content: content.trim(),
-        userId: Number(user.id),
-      });
+      }
+    );
 
-      const newPost = response.data?.data || response.data;
+    const newPost = response.data?.data || response.data;
 
-      setPosts((currentPosts) => [
-        newPost,
-        ...currentPosts,
-      ]);
+    setPosts((currentPosts) => [
+      newPost,
+      ...currentPosts,
+    ]);
 
-      setTitle("");
-      setContent("");
-    } catch (error) {
-      console.error(
-        "Failed to create post:",
-        error.response?.data || error
-      );
+    setTitle("");
+    setContent("");
+  } catch (error) {
+    console.error(
+      "Failed to create post:",
+      error.response?.data || error
+    );
 
-      alert("Failed to create post");
-    }
+    alert("Failed to create post");
   }
+}
 
   async function toggleLike(postId) {
     try {
