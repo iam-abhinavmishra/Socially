@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "users")
@@ -20,8 +21,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = false)
     private String username;
 
+    @Column(nullable = false, unique = false)
     private String email;
 
     private String password;

@@ -29,6 +29,14 @@ public class UserService {
 
     public UserResponse registerUser(UserRequest request) {
 
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already taken");
+        }
+
         User user = UserMapper.toEntity(request);
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
