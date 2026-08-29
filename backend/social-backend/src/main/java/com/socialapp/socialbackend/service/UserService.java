@@ -36,6 +36,9 @@ public class UserService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already taken");
         }
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email is already registered");
+        }
 
         User user = UserMapper.toEntity(request);
 
@@ -80,5 +83,14 @@ public class UserService {
                 .stream()
                 .map(UserMapper::toResponse)
                 .toList();
+    }
+    public UserResponse getUserById(Long id) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        return UserMapper.toResponse(user);
     }
 }

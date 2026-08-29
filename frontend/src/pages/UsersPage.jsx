@@ -67,45 +67,50 @@ function UsersPage() {
   }
 
   async function toggleFollow(targetUser) {
-    const existingFollow = getFollowRecord(targetUser.id);
+  const existingFollow = getFollowRecord(targetUser.id);
 
-    try {
-      if (existingFollow) {
-        await api.delete(`/follows/${existingFollow.id}`);
+  try {
+    if (existingFollow) {
+      await api.delete("/follows", {
+        params: {
+          followerId: Number(currentUser.id),
+          followingId: Number(targetUser.id),
+        },
+      });
 
-        setFollowing((currentFollowing) =>
-          currentFollowing.filter(
-            (follow) =>
-              follow.id !== existingFollow.id
-          )
-        );
-      } else {
-        const response = await api.post("/follows", {
-          follower: {
-            id: Number(currentUser.id),
-          },
-          following: {
-            id: Number(targetUser.id),
-          },
-        });
-
-        const newFollow =
-          response.data?.data || response.data;
-
-        setFollowing((currentFollowing) => [
-          ...currentFollowing,
-          newFollow,
-        ]);
-      }
-    } catch (error) {
-      console.error(
-        "Failed to update follow:",
-        error.response?.data || error
+      setFollowing((currentFollowing) =>
+        currentFollowing.filter(
+          (follow) => follow.id !== existingFollow.id
+        )
       );
+    } else {
+      const response = await api.post("/follows", null, {
+        params: {
+          followerId: Number(currentUser.id),
+          followingId: Number(targetUser.id),
+        },
+      });
 
-      alert("Failed to update follow");
+      const newFollow =
+        response.data?.data || response.data;
+
+      setFollowing((currentFollowing) => [
+        ...currentFollowing,
+        newFollow,
+      ]);
     }
+  } catch (error) {
+    console.error(
+      "Failed to update follow:",
+      error.response?.data || error
+    );
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to update follow"
+    );
   }
+}
 
   const filteredUsers = useMemo(() => {
     const searchText = search.trim().toLowerCase();

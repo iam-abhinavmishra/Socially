@@ -1,37 +1,63 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import api from "../services/api";
 
 function ExplorePage() {
+  const navigate = useNavigate();
+
   const storedUser = localStorage.getItem("user");
   const currentUser = storedUser
     ? JSON.parse(storedUser)
     : null;
 
   const [users, setUsers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUsers();
+    if (!currentUser?.id) {
+      setLoading(false);
+      return;
+    }
+
+    loadData();
   }, []);
 
-  async function loadUsers() {
+  async function loadData() {
     try {
-      const response = await api.get("/users");
+      const [usersResponse, followingResponse] =
+        await Promise.all([
+          api.get("/users"),
+          api.get(
+            `/follows/following/${currentUser.id}`
+          ),
+        ]);
 
-      const data =
-        response.data?.data || response.data;
+      const usersData =
+        usersResponse.data?.data ||
+        usersResponse.data;
 
-      const otherUsers = Array.isArray(data)
-        ? data.filter(
+      const followingData =
+        followingResponse.data?.data ||
+        followingResponse.data;
+
+      const otherUsers = Array.isArray(usersData)
+        ? usersData.filter(
             (user) =>
               Number(user.id) !==
-              Number(currentUser?.id)
+              Number(currentUser.id)
           )
         : [];
 
       setUsers(otherUsers);
+
+      setFollowing(
+        Array.isArray(followingData)
+          ? followingData
+          : []
+      );
     } catch (error) {
       console.error(
         "Failed to load users:",
@@ -39,23 +65,112 @@ function ExplorePage() {
       );
 
       setUsers([]);
+      setFollowing([]);
     } finally {
       setLoading(false);
     }
   }
 
-  const filteredUsers = users.filter((user) => {
-    const searchText = search.toLowerCase();
-
-    return (
-      user.username
-        ?.toLowerCase()
-        .includes(searchText) ||
-      user.email
-        ?.toLowerCase()
-        .includes(searchText)
+  function getFollowRecord(userId) {
+    return following.find(
+      (follow) =>
+        Number(follow.following?.id) ===
+        Number(userId)
     );
-  });
+  }
+
+  async function toggleFollow(targetUser) {
+    const existingFollow =
+      getFollowRecord(targetUser.id);
+
+    try {
+      if (existingFollow) {
+
+        await api.delete("/follows", {
+          params: {
+            followerId: Number(currentUser.id),
+            followingId: Number(targetUser.id),
+          },
+        });
+
+        setFollowing((current) =>
+          current.filter(
+            (follow) =>
+              follow.id !== existingFollow.id
+          )
+        );
+
+      } else {
+
+        const response = await api.post(
+          "/follows",
+          null,
+          {
+            params: {
+              followerId:
+                Number(currentUser.id),
+
+              followingId:
+                Number(targetUser.id),
+            },
+          }
+        );
+
+        const newFollow =
+          response.data?.data ||
+          response.data;
+
+        setFollowing((current) => [
+          ...current,
+          newFollow,
+        ]);
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Failed to update follow:",
+        error.response?.data || error
+      );
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to update follow"
+      );
+    }
+  }
+
+  const filteredUsers = useMemo(() => {
+    const searchText =
+      search.trim().toLowerCase();
+
+    if (!searchText) {
+      return users;
+    }
+
+    return users.filter((user) => {
+      const username =
+        user.username?.toLowerCase() || "";
+
+      const email =
+        user.email?.toLowerCase() || "";
+
+      return (
+        username.includes(searchText) ||
+        email.includes(searchText)
+      );
+    });
+  }, [users, search]);
+
+  if (!currentUser) {
+    return (
+      <MainLayout>
+        <div className="p-6">
+          Please log in first.
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -69,7 +184,7 @@ function ExplorePage() {
           Discover people on Socially.
         </p>
 
-        <div className="mt-6">
+        <div className="mt-5">
           <input
             type="text"
             value={search}
@@ -77,66 +192,90 @@ function ExplorePage() {
               setSearch(event.target.value)
             }
             placeholder="Search by username or email..."
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
         <div className="mt-6 space-y-3">
 
           {loading ? (
+
             <p className="text-center text-slate-500">
               Loading users...
             </p>
+
           ) : filteredUsers.length === 0 ? (
-            <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-              <div className="text-4xl">
-                🔍
-              </div>
 
-              <p className="mt-3 font-medium text-slate-700">
-                No users found.
-              </p>
+            <p className="text-center text-slate-500">
+              No users found.
+            </p>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Try searching for another username.
-              </p>
-            </div>
           ) : (
-            filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm"
-              >
-                <div className="flex items-center gap-3">
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-600">
-                    {user.username
-                      ?.charAt(0)
-                      ?.toUpperCase() || "U"}
-                  </div>
+            filteredUsers.map((user) => {
 
-                  <div>
-                    <h2 className="font-semibold text-slate-900">
-                      {user.username}
-                    </h2>
+              const existingFollow =
+                getFollowRecord(user.id);
 
-                    <p className="text-sm text-slate-500">
-                      {user.email}
-                    </p>
-                  </div>
+              const isFollowing =
+                Boolean(existingFollow);
+
+              return (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm"
+                >
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        `/profile/${user.id}`
+                      )
+                    }
+                    className="flex min-w-0 items-center gap-3 text-left"
+                  >
+
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-600">
+                      {user.username
+                        ?.charAt(0)
+                        ?.toUpperCase() || "U"}
+                    </div>
+
+                    <div className="min-w-0">
+                      <h2 className="truncate font-semibold text-slate-900">
+                        {user.username}
+                      </h2>
+
+                      <p className="truncate text-sm text-slate-500">
+                        {user.email}
+                      </p>
+                    </div>
+
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toggleFollow(user)
+                    }
+                    className={
+                      isFollowing
+                        ? "ml-3 shrink-0 rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-100"
+                        : "ml-3 shrink-0 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+                    }
+                  >
+                    {isFollowing
+                      ? "Unfollow"
+                      : "Follow"}
+                  </button>
 
                 </div>
-
-                <span className="text-sm text-slate-400">
-                  User
-                </span>
-
-              </div>
-            ))
+              );
+            })
           )}
 
         </div>
-
       </div>
     </MainLayout>
   );

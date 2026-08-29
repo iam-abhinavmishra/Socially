@@ -8,6 +8,7 @@ import BookmarksPage from "./pages/BookmarksPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
+import UserProfilePage from "./pages/UserProfilePage";
 
 function App() {
   return (
@@ -21,6 +22,10 @@ function App() {
 <Route
   path="/following"
   element={<ConnectionsPage />}
+/>
+<Route
+  path="/profile/:userId"
+  element={<UserProfilePage />}
 />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />

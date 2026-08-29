@@ -27,20 +27,32 @@ public class FeedController {
     @GetMapping("/{userId}")
     public List<Post> getFeed(@PathVariable Long userId) {
 
+        List<Post> feed = new ArrayList<>();
+
+        // Add your own posts
+        feed.addAll(postRepository.findByUserId(userId));
+
+        // Add posts from people you follow
         List<Follow> follows =
                 followRepository.findByFollowerId(userId);
 
-        List<Post> feed = new ArrayList<>();
-
         for (Follow follow : follows) {
+
             Long followingUserId =
                     follow.getFollowing().getId();
 
-            List<Post> posts =
-                    postRepository.findByUserId(followingUserId);
-
-            feed.addAll(posts);
+            feed.addAll(
+                    postRepository.findByUserId(followingUserId)
+            );
         }
+
+        // Newest posts first
+        feed.sort(
+                (a, b) -> Long.compare(
+                        b.getId(),
+                        a.getId()
+                )
+        );
 
         return feed;
     }

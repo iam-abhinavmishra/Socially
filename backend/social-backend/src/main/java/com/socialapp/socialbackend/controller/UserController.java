@@ -49,4 +49,15 @@ public class UserController {
                 userService.getAllUsers()
         );
     }
+    @GetMapping("/{id}")
+    public ApiResponse<UserResponse> getUserById(
+            @PathVariable Long id
+    ) {
+
+        return new ApiResponse<>(
+                true,
+                "User fetched successfully",
+                userService.getUserById(id)
+        );
+    }
 }
