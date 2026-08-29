@@ -17,23 +17,40 @@ public class FollowController {
     }
 
     @PostMapping
-    public Follow follow(@RequestBody Follow follow) {
-        return followService.follow(follow);
+    public Follow follow(
+            @RequestParam Long followerId,
+            @RequestParam Long followingId
+    ) {
+        return followService.follow(
+                followerId,
+                followingId
+        );
     }
 
     @GetMapping("/followers/{userId}")
-    public List<Follow> followers(@PathVariable Long userId) {
+    public List<Follow> followers(
+            @PathVariable Long userId
+    ) {
         return followService.getFollowers(userId);
     }
 
     @GetMapping("/following/{userId}")
-    public List<Follow> following(@PathVariable Long userId) {
+    public List<Follow> following(
+            @PathVariable Long userId
+    ) {
         return followService.getFollowing(userId);
     }
 
-    @DeleteMapping("/{id}")
-    public String unfollow(@PathVariable Long id) {
-        followService.unfollow(id);
+    @DeleteMapping
+    public String unfollow(
+            @RequestParam Long followerId,
+            @RequestParam Long followingId
+    ) {
+        followService.unfollow(
+                followerId,
+                followingId
+        );
+
         return "Unfollowed successfully";
     }
 }
