@@ -2,12 +2,16 @@ package com.socialapp.socialbackend.controller;
 
 import com.socialapp.socialbackend.model.Follow;
 import com.socialapp.socialbackend.model.Post;
+import com.socialapp.socialbackend.repository.CommentRepository;
 import com.socialapp.socialbackend.repository.FollowRepository;
+import com.socialapp.socialbackend.repository.LikeRepository;
 import com.socialapp.socialbackend.repository.PostRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/feed")
@@ -15,17 +19,23 @@ public class FeedController {
 
     private final FollowRepository followRepository;
     private final PostRepository postRepository;
+    private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
 
     public FeedController(
             FollowRepository followRepository,
-            PostRepository postRepository
+            PostRepository postRepository,
+            LikeRepository likeRepository,
+            CommentRepository commentRepository
     ) {
         this.followRepository = followRepository;
         this.postRepository = postRepository;
+        this.likeRepository = likeRepository;
+        this.commentRepository = commentRepository;
     }
 
     @GetMapping("/{userId}")
-    public List<Post> getFeed(@PathVariable Long userId) {
+    public List<Map<String, Object>> getFeed(@PathVariable Long userId) {
 
         List<Post> feed = new ArrayList<>();
 
@@ -54,6 +64,31 @@ public class FeedController {
                 )
         );
 
-        return feed;
+        // Add like and comment counts
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        for (Post post : feed) {
+
+            Map<String, Object> postData = new HashMap<>();
+
+            postData.put("id", post.getId());
+            postData.put("title", post.getTitle());
+            postData.put("content", post.getContent());
+            postData.put("user", post.getUser());
+
+            postData.put(
+                    "likeCount",
+                    likeRepository.countByPostId(post.getId())
+            );
+
+            postData.put(
+                    "commentCount",
+                    commentRepository.countByPostId(post.getId())
+            );
+
+            response.add(postData);
+        }
+
+        return response;
     }
 }
