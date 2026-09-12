@@ -9,7 +9,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "https://socially-si0w.onrender.com"
+})
 public class AuthController {
 
     private final GoogleAuthService googleAuthService;

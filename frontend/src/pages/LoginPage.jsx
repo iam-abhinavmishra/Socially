@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import api from "../services/api";
 
 function LoginPage() {
@@ -11,6 +12,19 @@ function LoginPage() {
   });
 
   const [loading, setLoading] = useState(false);
+
+  const saveUserSession = (userData) => {
+    localStorage.setItem("token", userData.token);
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+      })
+    );
+  };
 
   const handleChange = (e) => {
     setForm({
@@ -26,31 +40,48 @@ function LoginPage() {
       setLoading(true);
 
       const response = await api.post("/users/login", form);
-
       const userData = response.data;
 
-      localStorage.setItem("token", userData.token);
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: userData.id,
-          username: userData.username,
-          email: userData.email,
-        })
-      );
-
+      saveUserSession(userData);
       navigate("/home");
-
     } catch (error) {
       console.error("Login failed:", error);
+
       alert(
         error.response?.data?.message ||
-        "Invalid email or password"
+          "Invalid email or password"
       );
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+
+      const response = await api.post("/auth/google", {
+        credential: credentialResponse.credential,
+      });
+
+      const userData = response.data;
+
+      saveUserSession(userData);
+      navigate("/home");
+    } catch (error) {
+      console.error("Google login failed:", error);
+
+      alert(
+        error.response?.data?.message ||
+          "Google login failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    alert("Google login was unsuccessful. Please try again.");
   };
 
   return (
@@ -75,7 +106,7 @@ function LoginPage() {
             value={form.email}
             onChange={handleChange}
             required
-            className="w-full rounded-lg border border-slate-300 px-4 py-3"
+            className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
           />
 
           <input
@@ -85,17 +116,35 @@ function LoginPage() {
             value={form.password}
             onChange={handleChange}
             required
-            className="w-full rounded-lg border border-slate-300 px-4 py-3"
+            className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-300" />
+
+          <span className="text-sm text-slate-500">
+            OR
+          </span>
+
+          <div className="h-px flex-1 bg-slate-300" />
+        </div>
+
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+          />
+        </div>
 
         <p className="mt-5 text-center text-sm text-slate-600">
           Don't have an account?{" "}
