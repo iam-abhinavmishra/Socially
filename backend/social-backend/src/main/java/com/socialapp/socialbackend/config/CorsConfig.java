@@ -18,7 +18,7 @@ public class CorsConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "https://socially-si0w.onrender.com",
-                "http://localhost:5173"
+                "http://localhost:5174"
         ));
 
         configuration.setAllowedMethods(List.of(
