@@ -24,15 +24,21 @@ public class SecurityConfig {
         http
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow browser CORS preflight requests
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
-                        // Allow all current API endpoints
+                        .requestMatchers(
+                                "/api/users/register",
+                                "/api/users/login",
+                                "/api/auth/**"
+                        ).permitAll()
+
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(
