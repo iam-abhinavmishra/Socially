@@ -25,35 +25,88 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route
-  path="/followers"
-  element={<ConnectionsPage />}
-/>
-
-<Route
-  path="/following"
-  element={<ConnectionsPage />}
-/>
-<Route
-  path="/profile/:userId"
-  element={<UserProfilePage />}
-/>
-        <Route path="/users" element={<UsersPage />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+          path="/followers"
+          element={<ConnectionsPage />}
+        />
 
         <Route
-  path="/home"
-  element={
-    <ProtectedRoute>
-      <HomePage />
-    </ProtectedRoute>
-  }
-/>
-        <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/bookmarks" element={<BookmarksPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+          path="/following"
+          element={<ConnectionsPage />}
+        />
+
+        <Route
+          path="/profile/:userId"
+          element={<UserProfilePage />}
+        />
+
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/"
+          element={<Navigate to="/login" replace />}
+        />
+
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
+
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/bookmarks"
+          element={
+            <ProtectedRoute>
+              <BookmarksPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
