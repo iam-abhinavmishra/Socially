@@ -57,3 +57,7 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+tasks.register('generateSeed', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'SeedDataGenerator'
+}

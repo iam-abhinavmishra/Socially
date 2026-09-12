@@ -4,4 +4,6 @@ import com.socialapp.socialbackend.model.Like;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LikeRepository extends JpaRepository<Like, Long> {
+
+    void deleteByPostId(Long postId);
 }

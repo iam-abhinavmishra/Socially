@@ -15,4 +15,6 @@ public interface BookmarkRepository
             Long userId,
             Long postId
     );
+
+    void deleteByPostId(Long postId);
 }
