@@ -7,6 +7,7 @@ function HomePage() {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
+  const [creatingPost, setCreatingPost] = useState(false);
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
@@ -24,7 +25,6 @@ function HomePage() {
     try {
       const response = await api.get(`/feed/${user.id}`);
       const data = response.data?.data || response.data;
-
       setPosts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to load posts:", error);
@@ -35,37 +35,43 @@ function HomePage() {
   }
 
   async function createPost(event) {
-  event.preventDefault();
+    event.preventDefault();
 
-  if (!content.trim() || !user?.id) return;
+    if (creatingPost) return;
 
-  try {
-    const response = await api.post(
-      `/posts?userId=${Number(user.id)}`,
-      {
-        title: title.trim(),
-        content: content.trim(),
-      }
-    );
+    if (!content.trim() || !user?.id) return;
 
-    const newPost = response.data?.data || response.data;
+    try {
+      setCreatingPost(true);
 
-    setPosts((currentPosts) => [
-      newPost,
-      ...currentPosts,
-    ]);
+      const response = await api.post(
+        `/posts?userId=${Number(user.id)}`,
+        {
+          title: title.trim(),
+          content: content.trim(),
+        }
+      );
 
-    setTitle("");
-    setContent("");
-  } catch (error) {
-    console.error(
-      "Failed to create post:",
-      error.response?.data || error
-    );
+      const newPost = response.data?.data || response.data;
 
-    alert("Failed to create post");
+      setPosts((currentPosts) => [
+        newPost,
+        ...currentPosts,
+      ]);
+
+      setTitle("");
+      setContent("");
+    } catch (error) {
+      console.error(
+        "Failed to create post:",
+        error.response?.data || error
+      );
+
+      alert("Failed to create post");
+    } finally {
+      setCreatingPost(false);
+    }
   }
-}
 
   async function toggleLike(postId) {
     try {
@@ -104,7 +110,8 @@ function HomePage() {
               setTitle(event.target.value)
             }
             placeholder="Post title (optional)"
-            className="mb-3 w-full border-b border-slate-200 p-2 text-lg font-semibold text-slate-800 outline-none"
+            disabled={creatingPost}
+            className="mb-3 w-full border-b border-slate-200 p-2 text-lg font-semibold text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-50"
           />
 
           <textarea
@@ -115,7 +122,8 @@ function HomePage() {
             }
             placeholder="What is happening?"
             maxLength={500}
-            className="min-h-28 w-full resize-none border-0 p-2 text-slate-800 outline-none"
+            disabled={creatingPost}
+            className="min-h-28 w-full resize-none border-0 p-2 text-slate-800 outline-none disabled:bg-slate-50"
           />
 
           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
@@ -125,10 +133,12 @@ function HomePage() {
 
             <button
               type="submit"
-              disabled={!content.trim()}
-              className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              disabled={
+                creatingPost || !content.trim()
+              }
+              className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Post
+              {creatingPost ? "Posting..." : "Post"}
             </button>
           </div>
         </form>
@@ -171,6 +181,15 @@ function PostCard({ post, user, onLike }) {
   const [bookmarked, setBookmarked] =
     useState(false);
 
+  const [commentLoading, setCommentLoading] =
+    useState(false);
+
+  const [likeLoading, setLikeLoading] =
+    useState(false);
+
+  const [bookmarkLoading, setBookmarkLoading] =
+    useState(false);
+
   const author =
     post.user?.username ||
     post.username ||
@@ -209,11 +228,15 @@ function PostCard({ post, user, onLike }) {
   async function addComment(event) {
     event.preventDefault();
 
+    if (commentLoading) return;
+
     if (!commentText.trim() || !user?.id) {
       return;
     }
 
     try {
+      setCommentLoading(true);
+
       const response =
         await api.post("/comments", {
           content: commentText.trim(),
@@ -238,13 +261,28 @@ function PostCard({ post, user, onLike }) {
       );
 
       alert("Failed to add comment");
+    } finally {
+      setCommentLoading(false);
+    }
+  }
+
+  async function handleLike() {
+    if (likeLoading) return;
+
+    try {
+      setLikeLoading(true);
+      await onLike(post.id);
+    } finally {
+      setLikeLoading(false);
     }
   }
 
   async function toggleBookmark() {
-    if (!user?.id) return;
+    if (!user?.id || bookmarkLoading) return;
 
     try {
+      setBookmarkLoading(true);
+
       if (bookmarked) {
         await api.delete("/bookmarks", {
           params: {
@@ -275,19 +313,19 @@ function PostCard({ post, user, onLike }) {
       );
 
       alert("Failed to update bookmark");
+    } finally {
+      setBookmarkLoading(false);
     }
   }
 
   return (
     <article className="rounded-xl bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3">
-
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
           {author.charAt(0).toUpperCase()}
         </div>
 
         <div className="min-w-0 flex-1">
-
           <div className="flex items-center gap-2">
             <p className="font-bold text-slate-900">
               {author}
@@ -309,33 +347,39 @@ function PostCard({ post, user, onLike }) {
           </p>
 
           <div className="mt-4 flex flex-wrap gap-5 text-sm text-slate-500">
-
             <button
               type="button"
               onClick={loadComments}
-              className="hover:text-blue-600"
+              disabled={commentLoading}
+              className="hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               💬 Comment ({comments.length})
             </button>
 
             <button
               type="button"
-              onClick={() => onLike(post.id)}
-              className="hover:text-red-600"
+              onClick={handleLike}
+              disabled={likeLoading}
+              className="hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              ♡ Like
+              {likeLoading ? "Liking..." : "♡ Like"}
             </button>
 
             <button
               type="button"
               onClick={toggleBookmark}
+              disabled={bookmarkLoading}
               className={
-                bookmarked
+                bookmarkLoading
+                  ? "cursor-not-allowed opacity-50"
+                  : bookmarked
                   ? "font-medium text-blue-600"
                   : "hover:text-blue-600"
               }
             >
-              {bookmarked
+              {bookmarkLoading
+                ? "Saving..."
+                : bookmarked
                 ? "🔖 Bookmarked"
                 : "🔖 Bookmark"}
             </button>
@@ -346,12 +390,10 @@ function PostCard({ post, user, onLike }) {
             >
               ↗ Share
             </button>
-
           </div>
 
           {showComments && (
             <div className="mt-5 border-t border-slate-100 pt-4">
-
               <form
                 onSubmit={addComment}
                 className="flex gap-2"
@@ -365,19 +407,23 @@ function PostCard({ post, user, onLike }) {
                     )
                   }
                   placeholder="Write a comment..."
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500"
+                  disabled={commentLoading}
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500 disabled:bg-slate-50"
                 />
 
                 <button
                   type="submit"
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                  disabled={
+                    commentLoading ||
+                    !commentText.trim()
+                  }
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Send
+                  {commentLoading ? "Sending..." : "Send"}
                 </button>
               </form>
 
               <div className="mt-4 space-y-3">
-
                 {comments.length === 0 ? (
                   <p className="text-sm text-slate-500">
                     No comments yet.
@@ -405,11 +451,9 @@ function PostCard({ post, user, onLike }) {
                     );
                   })
                 )}
-
               </div>
             </div>
           )}
-
         </div>
       </div>
     </article>
