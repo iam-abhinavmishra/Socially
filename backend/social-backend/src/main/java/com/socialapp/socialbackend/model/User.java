@@ -1,4 +1,5 @@
 package com.socialapp.socialbackend.model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,10 +23,10 @@ public class User {
     private Long id;
 
     private String username;
-
+    @JsonIgnore
     @Column(nullable = false, unique = true)
     private String email;
-
+    @JsonIgnore
     private String password;
 
     public User() {
