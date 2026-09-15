@@ -357,13 +357,23 @@ function PostCard({ post, user, onLike }) {
             </button>
 
             <button
-              type="button"
-              onClick={handleLike}
-              disabled={likeLoading}
-              className="hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {likeLoading ? "Liking..." : "♡ Like"}
-            </button>
+  type="button"
+  onClick={handleLike}
+  disabled={likeLoading}
+  className={
+    likeLoading
+      ? "cursor-not-allowed opacity-50"
+      : post.likedByCurrentUser
+      ? "font-medium text-red-600"
+      : "hover:text-red-600"
+  }
+>
+  {likeLoading
+    ? "Liking..."
+    : post.likedByCurrentUser
+    ? "♥ Like"
+    : "♡ Like"}
+</button>
 
             <button
               type="button"

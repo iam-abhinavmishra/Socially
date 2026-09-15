@@ -33,6 +33,8 @@ public class LikeController {
         return likeService.likePost(userId, postId);
     }
 
+
+
     @GetMapping
     public List<Like> getLikes() {
         return likeService.getAllLikes();

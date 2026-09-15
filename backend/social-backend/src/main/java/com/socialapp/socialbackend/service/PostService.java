@@ -1,4 +1,5 @@
 package com.socialapp.socialbackend.service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.socialapp.socialbackend.model.Post;
 import com.socialapp.socialbackend.model.User;
@@ -49,7 +50,7 @@ public class PostService {
     public Post getPostById(Long id) {
         return postRepository.findById(id).orElse(null);
     }
-
+    @Transactional
     public void deletePost(Long id) {
 
         if (!postRepository.existsById(id)) {

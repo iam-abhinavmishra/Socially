@@ -64,7 +64,7 @@ public class FeedController {
                 )
         );
 
-        // Add like and comment counts
+        // Add like/comment counts and current user's like state
         List<Map<String, Object>> response = new ArrayList<>();
 
         for (Post post : feed) {
@@ -84,6 +84,16 @@ public class FeedController {
             postData.put(
                     "commentCount",
                     commentRepository.countByPostId(post.getId())
+            );
+
+            postData.put(
+                    "likedByCurrentUser",
+                    likeRepository
+                            .findByUserIdAndPostId(
+                                    userId,
+                                    post.getId()
+                            )
+                            .isPresent()
             );
 
             response.add(postData);

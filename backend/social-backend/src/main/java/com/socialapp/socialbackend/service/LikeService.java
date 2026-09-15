@@ -42,6 +42,15 @@ public class LikeService {
                         new RuntimeException("Post not found")
                 );
 
+        Like existingLike =
+                likeRepository.findByUserIdAndPostId(userId, postId)
+                        .orElse(null);
+
+        if (existingLike != null) {
+            likeRepository.delete(existingLike);
+            return null;
+        }
+
         Like like = new Like();
 
         like.setUser(user);
